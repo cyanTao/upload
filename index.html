@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='utf-8' />
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <title>Page Title</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+</head>
+
+<body>
+  <input type="file" id="uploaderInput">
+</body>
+
+</html>
+<script src="./jquery-1.12.4.js"></script>
+<script>
+  // 上传视频开始
+$('#uploaderInput').on('change', function() {
+  $('.loading').css('display', 'block')
+  const file = this.files[0]
+  if (file) {
+    window.file = file
+    window.size = file.size
+    window.name = file.name
+    window.shareSize = 2 * 1024 * 1024
+    window.total = Math.ceil(size / shareSize)
+    window.success = 0
+    window.index = 0
+    upload()
+  }
+})
+
+function upload(){
+  let file = window.file
+  let i = window.index
+  let shareSize = window.shareSize
+  let total = window.total
+  let success = window.success
+
+   var start = i * shareSize
+      var end = (i + 1) * shareSize > size ? size : (i + 1) * shareSize
+
+      var formData = new FormData()
+      formData.append('filename', name)
+      formData.append('total', total)
+      formData.append('index', i)
+      formData.append('data', file.slice(start, end))
+
+      var xhr = new XMLHttpRequest()
+      xhr.open('post', 'http://127.0.0.1:8080/uploadVideo')
+      xhr.send(formData)
+      $('.js_progress').css('width', '0')
+      xhr.onload = function() {
+        success++
+      }
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          const data = JSON.parse(xhr.responseText)
+          console.log(data)
+          if (data.success) {
+            if(i == total-1){
+              alert('上传成功')
+              return
+            } else {
+              window.index++
+              upload()
+            }
+            // $('.weui-uploader__file video')[0].src = data.videoUrl
+            // $('.weui-uploader__file').css('display', 'block')
+            // $('.loading').css('display', 'none')
+          } else {
+            console.error('网络错误！')
+          }
+        }
+    }
+}
+
+</script>
