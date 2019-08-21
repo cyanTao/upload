@@ -9,7 +9,9 @@
 </head>
 
 <body>
-  <input type="file" id="uploaderInput">
+  <input type="file" id="uploaderInput" multiple="multiple">
+  <div id="video"></div>
+  进度: <div id="process">0</div>
 </body>
 
 </html>
@@ -48,7 +50,7 @@ function upload(){
       formData.append('data', file.slice(start, end))
 
       var xhr = new XMLHttpRequest()
-      xhr.open('post', 'http://127.0.0.1:8080/uploadVideo')
+      xhr.open('post', 'http://www.sesefadou.cn:8090/uploadVideo')
       xhr.send(formData)
       $('.js_progress').css('width', '0')
       xhr.onload = function() {
@@ -60,9 +62,11 @@ function upload(){
           console.log(data)
           if (data.success) {
             if(i == total-1){
-              alert('上传成功')
+              $('#process').html('100%')
+              $('#video').append('<video controls="controls" style="width:200px;" src="/static/'+data.videoUrl+'"></video>')
               return
             } else {
+              $('#process').html(data.process)
               window.index++
               upload()
             }
