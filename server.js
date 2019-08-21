@@ -3,20 +3,23 @@ const bodyParser = require('body-parser')
 const formidable = require('formidable')
 const fs = require('fs')
 const app = express()
+
+const dirPath = './static/file'
 const router = express.Router()
 app.use(bodyParser.json())
 app.use(
-bodyParser.urlencoded({
-extended: false
-})
+  bodyParser.urlencoded({
+    extended: false
+  })
 )
 
-app.all('*', function(req, res, next) {
-res.header('Access-Control-Allow-Origin', '*')
-res.header('Access-Control-Allow-Headers', 'content-type')
-res.header('Access-Control-Allow-Methods', 'POST,GET')
-if (req.method.toLowerCase() == 'options') res.send(200)
-else next()
+app.use(express.static('./static'))
+app.post('*', function (req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Headers', 'content-type')
+  res.header('Access-Control-Allow-Methods', 'POST,GET')
+  if (req.method.toLowerCase() == 'options') res.send(200)
+  else next()
 })
 
 let output = []
@@ -29,10 +32,10 @@ app.post('/uploadVideo', (req, res) => {
   res.header('Content-Type', 'application/json;charset=utf-8')
 
   var form = new formidable.IncomingForm()
-  form.uploadDir = './file'
+  form.uploadDir = dirPath
   form.keepExtensions = true
   form.parse(req, (err, fields, files) => {
-    if(err){
+    if (err) {
       res.send({
         success: false,
         msg: '未知错误'
@@ -41,7 +44,7 @@ app.post('/uploadVideo', (req, res) => {
       return
     }
     if (Number(fields.index) === 0) {
-      output.forEach(item=>{
+      output.forEach(item => {
         fs.unlinkSync(item.path)
       })
       output = []
@@ -56,7 +59,7 @@ app.post('/uploadVideo', (req, res) => {
     if (success == fields.total) {
       function read(i) {
         var data = fs.readFileSync(output[i].path)
-        fs.appendFileSync('./file/' + fields.filename, data)
+        fs.appendFileSync(dirPath + '/' + fields.filename, data)
         fs.unlinkSync(output[i].path)
         i++
         if (i < success) {
@@ -64,10 +67,10 @@ app.post('/uploadVideo', (req, res) => {
         } else {
           success = 0
           output = []
-           res.send({
+          res.send({
             success: true,
             msg: '上传成功',
-            videoUrl: 'file/' + fields.filename
+            videoUrl: '/file/' + fields.filename
           })
           return
         }
@@ -75,8 +78,8 @@ app.post('/uploadVideo', (req, res) => {
       read(0)
     } else {
       res.send({
-          success: true,
-          process
+        success: true,
+        process
       })
     }
   })
@@ -85,6 +88,6 @@ app.post('/uploadVideo', (req, res) => {
 
 app.use('/', router)
 
-app.listen('8090', () => {
-console.log('http://127.0.0.1:8090')
+app.listen('8080', () => {
+  console.log('http://127.0.0.1:8080')
 })

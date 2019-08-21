@@ -50,7 +50,7 @@ function upload(){
       formData.append('data', file.slice(start, end))
 
       var xhr = new XMLHttpRequest()
-      xhr.open('post', 'http://www.sesefadou.cn:8090/uploadVideo')
+      xhr.open('post', '/uploadVideo')
       xhr.send(formData)
       $('.js_progress').css('width', '0')
       xhr.onload = function() {
@@ -63,7 +63,7 @@ function upload(){
           if (data.success) {
             if(i == total-1){
               $('#process').html('100%')
-              $('#video').append('<video controls="controls" style="width:200px;" src="/static/'+data.videoUrl+'"></video>')
+              $('#video').append('<video controls="controls" style="width:200px;" src="'+data.videoUrl+'"></video>')
               return
             } else {
               $('#process').html(data.process)
