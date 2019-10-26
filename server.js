@@ -1,9 +1,17 @@
+const crypto = require('crypto')
+
 const express = require('express')
 const bodyParser = require('body-parser')
 const formidable = require('formidable')
 const fs = require('fs')
 const path = require('path')
 const app = express()
+
+const md5 = function (str) {
+  let md5 = crypto.createHash('md5')
+  let newPas = md5.update(str).digest('hex')
+  return newPas
+}
 
 //上传存储临时文件夹路径
 const temporary = './static/file/temporary'
@@ -45,10 +53,12 @@ app.post('/uploadVideo', (req, res) => {
   form.parse(req, (err, fields, files) => {
     // 文件名
     const {
-      filename,
+      filename: name,
       index: fileIndex,
       total
     } = fields
+    const ext = name.slice(name.lastIndexOf('.'))
+    const filename = md5(name) + ext
     const fileData = files.data
     // 创建各个用户的进度记录
     if (!all[filename]) {
