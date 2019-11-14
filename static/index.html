@@ -15,10 +15,12 @@
   </body>
 </html>
 <script src="./jquery-1.12.4.js"></script>
+<script src="./js/md5.js"></script>
 <script>
   // 上传视频开始
   $('#uploaderInput').on('change', function() {
     $('.loading').css('display', 'block')
+
     const files = this.files
     ;(async () => {
       for (let i = 0; i < files.length; i++) {
@@ -26,11 +28,23 @@
       }
     })()
   })
-  function uploadOne(file) {
+
+  function getHash(file) {
+    return new Promise(resolve => {
+      var reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = function(e) {
+        var hash = hex_md5(e.target.result)
+        resolve(hash)
+      }
+    })
+  }
+  async function uploadOne(file) {
     if (!file) {
       return
     }
     let index = file.name.lastIndexOf('.')
+    window.hash = await getHash(file)
     window.file = file
     window.size = file.size
     window.name =
@@ -43,6 +57,7 @@
     return new Promise((resolve, reject) => {
       upload(
         function(data) {
+          console.log(data)
           $('#process').html('100%')
           $('#video').append(
             '<video controls="controls" style="width:200px;" src="' +
@@ -59,12 +74,14 @@
       )
     })
   }
+
   function upload(callback, errCallback) {
     let file = window.file
     let i = window.index
     let shareSize = window.shareSize
     let total = window.total
     let success = window.success
+    let hash = window.hash
 
     var start = i * shareSize
     var end = (i + 1) * shareSize > size ? size : (i + 1) * shareSize
@@ -74,6 +91,7 @@
     formData.append('total', total)
     formData.append('index', i)
     formData.append('data', file.slice(start, end))
+    formData.append('hash', hash)
 
     var xhr = new XMLHttpRequest()
     xhr.open('post', '/uploadVideo')

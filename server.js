@@ -1,5 +1,7 @@
 const crypto = require('crypto')
 
+const mineType = require('mime-types');
+
 const express = require('express')
 const bodyParser = require('body-parser')
 const formidable = require('formidable')
@@ -55,7 +57,8 @@ app.post('/uploadVideo', (req, res) => {
     const {
       filename: name,
       index: fileIndex,
-      total
+      total,
+      hash: fileHash
     } = fields
     const ext = name.slice(name.lastIndexOf('.'))
     const filename = md5(name) + ext
@@ -113,6 +116,23 @@ app.post('/uploadVideo', (req, res) => {
           read(i)
         } else {
           // 最后一块也写入完成
+
+          // 获取文件hash
+          let data = fs.readFileSync(temporaryPath);
+          data = new Buffer(data).toString('base64');
+          let base64 = 'data:' + mineType.lookup(temporaryPath) + ';base64,' + data;
+          const hash = md5(base64)
+
+          // 判断文件是否原来的文件
+          if (fileHash !== hash) {
+            fs.unlinkSync(temporaryPath)
+            res.send({
+              success: false,
+              msg: '文件已损坏'
+            })
+            return
+          }
+
           const newPath = path.join(resultPath, filename)
           fs.copyFile(temporaryPath, newPath, (err) => {
             if (err) throw err;
@@ -120,11 +140,14 @@ app.post('/uploadVideo', (req, res) => {
             res.send({
               success: true,
               msg: '上传成功',
-              videoUrl: '/file/result/' + filename
+              videoUrl: '/file/result/' + filename,
+              hash
             })
             // 删掉json临时记录的文件
             delete all[filename]
           })
+
+
         }
       }
       read(0)
